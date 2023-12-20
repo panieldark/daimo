@@ -36,8 +36,8 @@ export type ParamListSend = {
 };
 
 export type ParamListReceive = {
-  Receive: { autoFocus: boolean };
-  RequestSend: undefined;
+  CreateReq: { autoFocus: boolean };
+  SendReq: { dollars: number };
   Note: { link: DaimoLinkNote };
 };
 
@@ -155,11 +155,12 @@ async function goTo(nav: MainNav, link: DaimoLink) {
   }
 }
 
+// Used by the X button on the top right. Quits current flow, goes home.
 export function useExitToHome() {
   const nav = useNav();
   return useCallback(() => {
     nav.navigate("HomeTab", { screen: "Home" });
-    if (!nav.canGoBack()) return;
+    if (nav["popToTop"] == null) return;
     if (Platform.OS === "ios") {
       setTimeout(() => nav.popToTop(), 400);
     } else {
@@ -168,6 +169,7 @@ export function useExitToHome() {
   }, []);
 }
 
+// Used by the back button on the top left. Goes back to previous screen.
 export function useExitBack() {
   const nav = useNav();
   const goBack = useCallback(() => nav.goBack(), []);

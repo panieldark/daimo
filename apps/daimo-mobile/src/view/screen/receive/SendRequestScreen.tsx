@@ -1,71 +1,51 @@
 import { dollarsToAmount, formatDaimoLink } from "@daimo/common";
 import { MAX_NONCE_ID_SIZE_BITS } from "@daimo/userop";
-import { useIsFocused } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { useRef, useState } from "react";
 import {
   Alert,
   Keyboard,
   Platform,
   Share,
   ShareAction,
-  TextInput,
   TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { Hex } from "viem";
 import { generatePrivateKey } from "viem/accounts";
 
-import { Account, useAccount } from "../../../model/account";
+import { Account, getAccountManager } from "../../../model/account";
 import { AmountChooser } from "../../shared/AmountInput";
 import { ButtonBig } from "../../shared/Button";
 import { ScreenHeader } from "../../shared/ScreenHeader";
 import Spacer from "../../shared/Spacer";
-import {
-  ParamListReceive,
-  useExitToHome,
-  useFocusOnScreenTransitionEnd,
-  useNav,
-} from "../../shared/nav";
+import { ParamListReceive, useExitBack, useExitToHome } from "../../shared/nav";
 import { ss } from "../../shared/style";
 import { TextCenter, TextLight } from "../../shared/text";
 import { useWithAccount } from "../../shared/withAccount";
 
-type Props = NativeStackScreenProps<ParamListReceive, "Receive">;
+type Props = NativeStackScreenProps<ParamListReceive, "SendReq">;
 
-export default function ReceiveScreen({ route }: Props) {
-  const { autoFocus } = route.params || {};
-  const Inner = useWithAccount(RequestScreenInner);
-  return <Inner autoFocus={!!autoFocus} />;
+export default function SendRequestScreen({ route }: Props) {
+  const { dollars } = route.params || {};
+  const Inner = useWithAccount(SendRequestScreenInner);
+  return <Inner dollars={dollars} />;
 }
 
-function RequestScreenInner({
+function SendRequestScreenInner({
   account,
-  autoFocus,
+  dollars,
 }: {
   account: Account;
-  autoFocus: boolean;
+  dollars: number;
 }) {
-  const [dollars, setDollars] = useState(0);
-
   // On successful send, go home
-  const [status, setStatus] = useState<"creating" | "sending" | "sent">(
-    "creating"
-  );
+  // const [status, setStatus] = useState<"sending" | "sent">("sending");
   const trackRequest = useTrackRequest();
-
-  const isFocused = useIsFocused();
-  const nav = useNav();
-  const textInputRef = useRef<TextInput>(null);
-
-  // Work around react-navigation autofocus bug
-  useFocusOnScreenTransitionEnd(textInputRef, nav, isFocused, autoFocus);
+  const goBack = useExitBack();
+  const goHome = useExitToHome();
 
   const sendRequest = async () => {
     try {
-      textInputRef.current?.blur();
-      setStatus("sending");
-
       const requestId = generateRequestID();
 
       const url = formatDaimoLink({
@@ -85,13 +65,14 @@ function RequestScreenInner({
       console.log(`[REQUEST] action ${result.action}`);
       if (result.action === Share.sharedAction) {
         console.log(`[REQUEST] shared, activityType: ${result.activityType}`);
-        setStatus("sent");
+        // setStatus("sent");
         trackRequest(requestId, dollars);
-        nav.navigate("HomeTab", { screen: "Home" });
+        goHome();
+        // nav.navigate("HomeTab", { screen: "Home" });
       } else if (result.action === Share.dismissedAction) {
         // Only on iOS
         console.log(`[REQUEST] share dismissed`);
-        setStatus("creating");
+        // setStatus("creating");
       }
     } catch (error: any) {
       Alert.alert(error.message);
@@ -109,19 +90,17 @@ function RequestScreenInner({
         <Spacer h={8} />
         <AmountChooser
           dollars={dollars}
-          onSetDollars={setDollars}
+          onSetDollars={() => {}}
           showAmountAvailable={false}
           autoFocus={false}
           lagAutoFocus={false}
-          innerRef={textInputRef}
-          disabled={status !== "creating"}
+          onFocus={goBack}
         />
         <Spacer h={32} />
         <View style={ss.container.padH16}>
           <ButtonBig
-            type={status === "sent" ? "success" : "primary"}
-            disabled={dollars <= 0 || status !== "creating"}
-            title={status === "sent" ? "Sent" : "Send Request"}
+            type="primary"
+            title="Send Request"
             onPress={sendRequest}
           />
         </View>
@@ -131,11 +110,8 @@ function RequestScreenInner({
 }
 
 function useTrackRequest() {
-  // TODO: use AccountManager. Delayed setAccount can clobber data.
-  const [account, setAccount] = useAccount();
   return (requestId: `${bigint}`, dollars: number) => {
-    if (account == null) return;
-    const newAccount = {
+    getAccountManager().transform((account) => ({
       ...account,
       trackedRequests: [
         ...account.trackedRequests,
@@ -144,8 +120,7 @@ function useTrackRequest() {
           amount: `${dollarsToAmount(dollars)}` as `${bigint}`,
         },
       ],
-    };
-    setAccount(newAccount);
+    }));
   };
 }
 

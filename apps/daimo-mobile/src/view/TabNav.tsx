@@ -23,8 +23,9 @@ import { QRScreen } from "./screen/QRScreen";
 import { SettingsScreen } from "./screen/SettingsScreen";
 import NoteScreen from "./screen/link/NoteScreen";
 import OnboardingScreen from "./screen/onboarding/OnboardingScreen";
+import { CreateRequestScreen } from "./screen/receive/CreateRequestScreen";
 import DepositScreen from "./screen/receive/DepositScreen";
-import ReceiveScreen from "./screen/receive/ReceiveScreen";
+import SendRequestScreen from "./screen/receive/SendRequestScreen";
 import { SendNavScreen } from "./screen/send/SendNavScreen";
 import { SendNoteScreen } from "./screen/send/SendNoteScreen";
 import SendTransferScreen from "./screen/send/SendTransferScreen";
@@ -171,12 +172,10 @@ const ReceiveStack = createNativeStackNavigator<ParamListReceive>();
 
 function ReceiveTab() {
   return (
-    <ReceiveStack.Navigator
-      initialRouteName="Receive"
-      screenOptions={noHeaders}
-    >
+    <ReceiveStack.Navigator screenOptions={noHeaders}>
       <ReceiveStack.Group>
-        <ReceiveStack.Screen name="Receive" component={ReceiveScreen} />
+        <ReceiveStack.Screen name="CreateReq" component={CreateRequestScreen} />
+        <ReceiveStack.Screen name="SendReq" component={SendRequestScreen} />
         <ReceiveStack.Screen name="Note" component={NoteScreen} />
       </ReceiveStack.Group>
     </ReceiveStack.Navigator>
