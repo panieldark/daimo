@@ -20,7 +20,7 @@ import { InputBig, OctName } from "../../shared/InputBig";
 import { IntroTextParagraph } from "../../shared/IntroTextParagraph";
 import Spacer from "../../shared/Spacer";
 import { color } from "../../shared/style";
-import { TextCenter, TextLight } from "../../shared/text";
+import { TextCenter, TextError, TextLight } from "../../shared/text";
 
 export function InvitePage({
   onNext,
@@ -76,17 +76,27 @@ export function InvitePage({
           <>
             <ButtonBig
               type="primary"
-              title="Paste invite from link"
+              title="PASTE INVITE FROM LINK"
               onPress={pasteInviteLink}
             />
+            {pasteLinkError && (
+              <TextCenter>
+                <Spacer h={8} />
+                <TextError>{pasteLinkError}</TextError>
+              </TextCenter>
+            )}
             <Spacer h={16} />
             <TextButton title="Enter code manually" onPress={enterManually} />
           </>
         )}
         {mode === "enter" && (
-          <EnterCodeForm
-            {...{ onNext, daimoChain, inviteLink, setInviteLink }}
-          />
+          <>
+            <EnterCodeForm
+              {...{ onNext, daimoChain, inviteLink, setInviteLink }}
+            />
+            <Spacer h={16} />
+            <TextButton title="JOIN WAITLIST" onPress={linkToWaitlist} />
+          </>
         )}
       </View>
     </View>
